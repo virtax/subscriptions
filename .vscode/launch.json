@@ -1,0 +1,51 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Docker: Attach to Node",
+
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}",
+      "remoteRoot": "/home/node/app",
+      "restart": true,
+      "sourceMaps": true,
+      "smartStep": true,
+      "skipFiles": ["<node_internals>/**"],
+      // "sourceMapPathOverrides": {
+      //   "/home/node/app/src/*": "${workspaceFolder}/src/*"
+      // },
+    },
+    {
+      "name": "Debug e2e tests (npm run test:e2e)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${env:HOME}/.nvm/versions/node/v22.12.0/bin/npm",
+      "runtimeArgs": [
+        "run",
+        "test:e2e",
+        "--"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "env": {
+        "TS_NODE_TRANSPILE_ONLY": "true",
+        "TS_JEST_DISABLE_VER_CHECKER": "true"
+      },
+      "sourceMaps": true,
+      "smartStep": true,
+    },
+  ]
+}
+
+
