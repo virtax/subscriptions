@@ -17,10 +17,10 @@ import { FilterBillingRecordDto } from './dto/filter-billing-record.dto';
 export class BillingController {
   constructor(private readonly billingService: BillingService) { }
 
-  @Post()
-  create(@Body() createBillingRecordDto: CreateBillingRecordDto) {
-    return this.billingService.create(createBillingRecordDto);
-  }
+  // @Post()
+  // create(@Body() createBillingRecordDto: CreateBillingRecordDto) {
+  //   return this.billingService.create(createBillingRecordDto);
+  // }
 
   @Get()
   findAll(@Query() filter: FilterBillingRecordDto) {
@@ -32,16 +32,16 @@ export class BillingController {
     return this.billingService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateBillingRecordDto: UpdateBillingRecordDto,
-  ) {
-    return this.billingService.update(+id, updateBillingRecordDto);
-  }
+  // @Patch(':id')
+  // update(
+  //   @Param('id') id: string,
+  //   @Body() updateBillingRecordDto: UpdateBillingRecordDto,
+  // ) {
+  //   return this.billingService.update(+id, updateBillingRecordDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.billingService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.billingService.remove(+id);
+  // }
 }
