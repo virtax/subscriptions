@@ -54,7 +54,7 @@ export class Subscription {
     default: 0,
     transformer: {
       from: (value: string) => parseFloat(value),
-      to: (value: number) => value.toString(),
+      to: (value: number) => value?.toString(),
     },
   })
   outstanding_credit: number;
