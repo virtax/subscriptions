@@ -5,8 +5,6 @@ import { BillingRecord } from './entities/billing-record.entity';
 import { Repository } from 'typeorm';
 import { SubscriptionsService } from 'src/subscriptions/subscriptions.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import moment from 'moment';
-import { Subscription } from 'src/subscriptions/entities/subscription.entity';
 import { plainToClass } from 'class-transformer';
 import { FilterBillingRecordDto } from './dto/filter-billing-record.dto';
 

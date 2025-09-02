@@ -227,7 +227,7 @@ New plan limit: ${subscription.plan.qr_code_limit}.`,
       }
       // Downgrade
       const CreditDue = (oldPlanDailyRate - newPlanDailyRate) * dayRemaining;
-      subscription.outstanding_credit = CreditDue;
+      subscription.outstanding_credit = +CreditDue.toFixed(2);
     }
   }
 
