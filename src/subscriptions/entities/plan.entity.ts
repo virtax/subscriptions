@@ -16,7 +16,14 @@ export class Plan {
   @Column('text')
   name: string;
 
-  @Column('numeric', { precision: 15, scale: 2 })
+  @Column('numeric', {
+    precision: 15,
+    scale: 2,
+    transformer: {
+      from: (value: string) => parseFloat(value),
+      to: (value: number) => value.toString(),
+    },
+  })
   price_per_month: number;
 
   @Column('int')

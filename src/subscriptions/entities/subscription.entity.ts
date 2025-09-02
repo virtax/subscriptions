@@ -48,7 +48,15 @@ export class Subscription {
   })
   billing_cycle_end_date: Date;
 
-  @Column('numeric', { precision: 15, scale: 2, default: 0 })
+  @Column('numeric', {
+    precision: 15,
+    scale: 2,
+    default: 0,
+    transformer: {
+      from: (value: string) => parseFloat(value),
+      to: (value: number) => value.toString(),
+    },
+  })
   outstanding_credit: number;
 
   @Column('int', { default: 0 })

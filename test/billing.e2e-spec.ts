@@ -5,6 +5,7 @@ import { CreateUserDto } from '../src/users/dto/create-user.dto';
 import { createPlan, deletePlan } from './common/plan.test.methods';
 import { createUser, deleteUser } from './common/user.test.methods';
 import {
+  findSubscription,
   subscribe,
   unSubscribe,
   updateSubscription,
@@ -54,13 +55,13 @@ describe('BillingController (e2e)', () => {
     await removeTimeMock();
   });
 
-  it('create billing record after subscribe to Pro plan', async () => {
+  it('When Outstanding Credit=0. Create billing record with monthly charge after subscribe to Pro plan', async () => {
     expect(user?.id).toBeDefined();
     expect(proPlan?.id).toBeDefined();
 
     subscription = await subscribe(user, proPlan);
     try {
-      await sleep(1500); // sleep 1.5 sec, wait for cron job to issue a billing record
+      await sleep(1200); // sleep 1.2 sec, wait for cron job to issue a billing record
 
       const subscriptionBillingRecords = await getBillingRecords(
         subscription.id,
@@ -74,7 +75,60 @@ describe('BillingController (e2e)', () => {
     }
   });
 
-  it('downgrade plan in the middle of period', async () => {
+  it('When Outstanding Сredit > plan charge. Create billing record with 0 charge, decrease credit by monthly charge, after subscribe to plan', async () => {
+    expect(user?.id).toBeDefined();
+    expect(proPlan?.id).toBeDefined();
+    const outstandingСredit = 50;
+
+    subscription = await subscribe(user, proPlan, 0, outstandingСredit);
+    try {
+      await sleep(1200); // sleep 1.2 sec, wait for cron job to issue a billing record
+
+      const subscriptionBillingRecords = await getBillingRecords(
+        subscription.id,
+      );
+      const newBilingRecord = subscriptionBillingRecords[0];
+
+      expect(newBilingRecord.subscription_id).toBe(subscription.id);
+      expect(newBilingRecord.amount).toBe(0);
+
+      const newCredit = 25; // outstandingСredit - proPlan.price_per_month;
+
+      const chargedSubscription = await findSubscription(subscription.id!);
+      expect(chargedSubscription.outstanding_credit).toBe(newCredit);
+    } finally {
+      await unSubscribe(subscription);
+    }
+  });
+
+  it('When 0 < Outstanding Сredit < plan charge. Create billing record with (PlanCharge-OutstandingСredit) charge, new credit = 0, after subscribe to plan', async () => {
+    expect(user?.id).toBeDefined();
+    expect(proPlan?.id).toBeDefined();
+    const outstandingСredit = 17;
+
+    const chargedAmount = 25 - 17;
+    const newCredit = 0;
+
+    subscription = await subscribe(user, proPlan, 0, outstandingСredit);
+    try {
+      await sleep(1500); // sleep 1.5 sec, wait for cron job to issue a billing record
+
+      const subscriptionBillingRecords = await getBillingRecords(
+        subscription.id,
+      );
+      const newBilingRecord = subscriptionBillingRecords[0];
+
+      expect(newBilingRecord.subscription_id).toBe(subscription.id);
+      expect(newBilingRecord.amount).toBe(chargedAmount);
+
+      const chargedSubscription = await findSubscription(subscription.id!);
+      expect(chargedSubscription.outstanding_credit).toBe(newCredit);
+    } finally {
+      await unSubscribe(subscription);
+    }
+  });
+
+  it('Downgrade plan in the middle of period, check outstanding_credit', async () => {
     expect(user?.id).toBeDefined();
     expect(proPlan?.id).toBeDefined();
     expect(basicPlan?.id).toBeDefined();
@@ -84,16 +138,12 @@ describe('BillingController (e2e)', () => {
       subscription = await subscribe(user, proPlan);
       expect(subscription.plan_id).toBe(proPlan.id);
 
-      //await sleep(1500); // sleep 1.5 sec, wait for scheduler
-
       await mockTime('2025-04-15T09:00:00.000Z');
       subscription.plan_id = basicPlan.id!;
 
       const updatedSubscription = await updateSubscription(subscription);
       expect(updatedSubscription.plan_id).toBe(basicPlan.id);
       expect(updatedSubscription.outstanding_credit).toBe(7.5);
-
-      //await sleep(1500); // sleep 1.5 sec, wait for scheduler
     } finally {
       await removeTimeMock();
       await unSubscribe(subscription);

@@ -5,10 +5,20 @@ import { CreateSubscriptionDto } from '../../src/subscriptions/dto/create-subscr
 import { CreateUserDto } from '../../src/users/dto/create-user.dto';
 import { CreatePlanDto } from '../../src/subscriptions/dto/create-plan.dto';
 
+export async function findSubscription(
+  id: number,
+): Promise<UpdateSubscriptionDto> {
+  const res = await request(`${apiUrl}/subscriptions`)
+    .get(`/${id}`)
+    .expect(200);
+  return res.body as UpdateSubscriptionDto;
+}
+
 export async function subscribe(
   user: CreateUserDto,
   plan: CreatePlanDto,
   current_qrcode_usage: number = 0,
+  outstanding_credit: number = 0,
 ): Promise<CreateSubscriptionDto> {
   const res = await request(`${apiUrl}/subscriptions`)
     .post('/')
@@ -16,6 +26,7 @@ export async function subscribe(
       user_id: user.id,
       plan_id: plan.id,
       current_qrcode_usage,
+      outstanding_credit,
     })
     .expect(201);
   return res.body as CreateSubscriptionDto;

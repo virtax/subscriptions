@@ -164,8 +164,12 @@ export class SubscriptionsService {
     return this.entityToDto(savedSubscription);
   }
 
-  async updateToNextBillingCycle(subscription: Subscription) {
-    const nextCycleStartDate = moment(subscription.billing_cycle_start_date)
+  async updateToNextBillingCycle(
+    id: number,
+    billingCycleStartDate: Date,
+    outstandingCredit: number,
+  ) {
+    const nextCycleStartDate = moment(billingCycleStartDate)
       .add(1, 'months')
       .toDate();
 
@@ -177,8 +181,9 @@ export class SubscriptionsService {
     const updateDto: Partial<Subscription> = {
       billing_cycle_start_date: nextCycleStartDate,
       billing_cycle_end_date: nextCycleEndDate,
+      outstanding_credit: outstandingCredit,
     };
-    return await this.update(subscription.id, updateDto);
+    return await this.update(id, updateDto);
   }
 
   private validateQRCodeUsageLimit(subscription: Subscription) {
