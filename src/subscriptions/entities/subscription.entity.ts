@@ -7,6 +7,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToOne,
+  Index,
 } from 'typeorm';
 
 import { Plan } from './plan.entity';
@@ -38,6 +39,7 @@ export class Subscription {
   @Column({
     type: 'timestamp',
   })
+  @Index()
   billing_cycle_start_date: Date;
 
   @Column({
