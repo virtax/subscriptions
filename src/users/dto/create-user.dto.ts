@@ -1,8 +1,9 @@
 import { Expose } from 'class-transformer';
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateUserDto {
   @Expose()
+  @IsOptional()
   id?: number;
 
   @Expose()

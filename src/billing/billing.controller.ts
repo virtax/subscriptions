@@ -6,24 +6,25 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { BillingService } from './billing.service';
 import { CreateBillingRecordDto } from './dto/create-billing-record.dto';
 import { UpdateBillingRecordDto } from './dto/update-billing-record.dto';
+import { FilterBillingRecordDto } from './dto/filter-billing-record.dto';
 
 @Controller('api/v1/billing')
 export class BillingController {
-  constructor(private readonly billingService: BillingService) {}
+  constructor(private readonly billingService: BillingService) { }
 
   @Post()
   create(@Body() createBillingRecordDto: CreateBillingRecordDto) {
-    // console.log('createBillingRecordDto', createBillingRecordDto);
     return this.billingService.create(createBillingRecordDto);
   }
 
   @Get()
-  findAll() {
-    return this.billingService.findAll();
+  findAll(@Query() filter: FilterBillingRecordDto) {
+    return this.billingService.findAll(filter);
   }
 
   @Get(':id')

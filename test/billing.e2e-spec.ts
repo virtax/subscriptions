@@ -11,7 +11,6 @@ import {
 } from './common/subscription.test.methods';
 import { getBillingRecords } from './common/billing.test.methods';
 import { sleep } from './common/test.utils';
-import { UpdateBillingRecordDto } from '../src/billing/dto/update-billing-record.dto';
 import { mockTime, removeTimeMock } from './common/time.test.methods';
 
 let user: CreateUserDto;
@@ -59,23 +58,17 @@ describe('BillingController (e2e)', () => {
     expect(user?.id).toBeDefined();
     expect(proPlan?.id).toBeDefined();
 
-    const initialBillingRecords = await getBillingRecords();
-    const initialBRCount = initialBillingRecords.length;
-
     subscription = await subscribe(user, proPlan);
     try {
-      await sleep(1500); // sleep 1.5 sec, wait for scheduler
+      await sleep(1500); // sleep 1.5 sec, wait for cron job to issue a billing record
 
-      const newBillingRecords = await getBillingRecords();
-      const newBRCount = newBillingRecords.length;
+      const subscriptionBillingRecords = await getBillingRecords(
+        subscription.id,
+      );
+      const newBilingRecord = subscriptionBillingRecords[0];
 
-      expect(newBRCount).toBe(initialBRCount + 1);
-
-      const lastBilingRecord: UpdateBillingRecordDto =
-        newBillingRecords[newBRCount - 1];
-
-      expect(lastBilingRecord.subscription_id).toBe(subscription.id);
-      expect(lastBilingRecord.amount).toBe(proPlan.price_per_month);
+      expect(newBilingRecord.subscription_id).toBe(subscription.id);
+      expect(newBilingRecord.amount).toBe(proPlan.price_per_month);
     } finally {
       await unSubscribe(subscription);
     }
@@ -95,7 +88,6 @@ describe('BillingController (e2e)', () => {
 
       await mockTime('2025-04-15T09:00:00.000Z');
       subscription.plan_id = basicPlan.id!;
-      delete subscription['plan'];
 
       const updatedSubscription = await updateSubscription(subscription);
       expect(updatedSubscription.plan_id).toBe(basicPlan.id);

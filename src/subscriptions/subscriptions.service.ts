@@ -15,6 +15,8 @@ import { plainToClass } from 'class-transformer';
 import moment from 'moment';
 import { TimeService } from 'src/time/time.service';
 import { isPostgresConflictError } from 'src/common/errors';
+import { FilterSubscriptionDto } from './dto/filter-subscription.dto';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class SubscriptionsService {
@@ -38,6 +40,8 @@ export class SubscriptionsService {
     if (subscription.plan) {
       subscriptionDto.plan_id = subscription.plan.id;
     }
+    delete subscriptionDto['user'];
+    delete subscriptionDto['plan'];
     return subscriptionDto;
   }
 
@@ -46,35 +50,51 @@ export class SubscriptionsService {
   ): Promise<Subscription> {
     const { plan_id, user_id } = subscriptionDto;
 
-    const userDto = await this.usersService.findOne(user_id!);
-    if (!userDto) {
-      throw new NotFoundException(`User ID ${user_id} not found.`);
+    let user: User;
+    if (user_id) {
+      const userDto = await this.usersService.findOne(user_id);
+      if (!userDto) {
+        throw new NotFoundException(`User ID ${user_id} not found.`);
+      }
+      user = await this.usersService.dtoToEntity(userDto);
     }
-    const user = await this.usersService.dtoToEntity(userDto);
 
-    const plan = await this.plansRepository.findOne({
-      where: { id: plan_id },
-    });
-    if (!plan) {
-      throw new NotFoundException(`Plan ID ${plan_id} not found.`);
+    let plan: Plan;
+    if (plan_id) {
+      plan = (await this.plansRepository.findOne({
+        where: { id: plan_id },
+      })) as Plan;
+      if (!plan) {
+        throw new NotFoundException(`Plan ID ${plan_id} not found.`);
+      }
     }
+
     let subscription: Subscription | undefined;
     if (!subscriptionDto.id) {
       subscription = this.subscriptionsRepository.create(subscriptionDto);
     } else {
-      subscription =
-        await this.subscriptionsRepository.preload(subscriptionDto);
-      if (!subscription) {
+      const existingSubscription = await this.subscriptionsRepository.findOneBy(
+        { id: subscriptionDto.id },
+      ); // load existingSubscription.plan_id and existingSubscription.user_id which can be empty in subscriptionDto: UpdateSubscriptionDto
+      if (!existingSubscription) {
         throw new NotFoundException(
           `Subscription with ID "${subscriptionDto.id}" not found`,
         );
       }
+      subscription = await this.subscriptionsRepository.preload({
+        ...existingSubscription,
+        ...subscriptionDto,
+      });
     }
 
-    subscription.user = user;
-    subscription.plan = plan;
+    if (user_id) {
+      subscription!.user = user!;
+    }
+    if (plan_id) {
+      subscription!.plan = plan!;
+    }
 
-    return subscription;
+    return subscription!;
   }
 
   async create(createSubscriptionDto: CreateSubscriptionDto) {
@@ -111,8 +131,14 @@ export class SubscriptionsService {
     }
   }
 
-  async findAll() {
-    const subscriptions = await this.subscriptionsRepository.find();
+  async findAll(filterDto: FilterSubscriptionDto) {
+    const where = {};
+    if (filterDto.id) {
+      where['id'] = filterDto.id;
+    }
+    const subscriptions = await this.subscriptionsRepository.find({
+      where,
+    });
     return subscriptions.map((subscription) => this.entityToDto(subscription));
   }
 
@@ -136,6 +162,23 @@ export class SubscriptionsService {
     const savedSubscription =
       await this.subscriptionsRepository.save(subscription);
     return this.entityToDto(savedSubscription);
+  }
+
+  async updateToNextBillingCycle(subscription: Subscription) {
+    const nextCycleStartDate = moment(subscription.billing_cycle_start_date)
+      .add(1, 'months')
+      .toDate();
+
+    const nextCycleEndDate = moment(nextCycleStartDate)
+      .add(1, 'month')
+      .subtract(1, 'day')
+      .toDate();
+
+    const updateDto: Partial<Subscription> = {
+      billing_cycle_start_date: nextCycleStartDate,
+      billing_cycle_end_date: nextCycleEndDate,
+    };
+    return await this.update(subscription.id, updateDto);
   }
 
   private validateQRCodeUsageLimit(subscription: Subscription) {

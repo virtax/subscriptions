@@ -3,8 +3,14 @@ import { UpdateBillingRecordDto } from './../../src/billing/dto/update-billing-r
 import { apiUrl } from './test.constants';
 import request from 'supertest';
 
-export async function getBillingRecords(): Promise<CreateBillingRecordDto[]> {
-  const res = await request(`${apiUrl}/billing`).get('/').expect(200);
+export async function getBillingRecords(
+  subscription_id: number | undefined = undefined,
+): Promise<CreateBillingRecordDto[]> {
+  let req = request(`${apiUrl}/billing`).get('/');
+  if (subscription_id) {
+    req = req.query({ subscription_id });
+  }
+  const res = await req.expect(200);
   return res.body as CreateBillingRecordDto[];
 }
 

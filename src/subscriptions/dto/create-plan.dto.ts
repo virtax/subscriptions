@@ -1,7 +1,8 @@
 import { Transform } from 'class-transformer';
-import { IsInt, IsNotEmpty } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreatePlanDto {
+  @IsOptional()
   id?: number;
 
   @IsNotEmpty()

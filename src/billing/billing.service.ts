@@ -8,6 +8,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import moment from 'moment';
 import { Subscription } from 'src/subscriptions/entities/subscription.entity';
 import { plainToClass } from 'class-transformer';
+import { FilterBillingRecordDto } from './dto/filter-billing-record.dto';
 
 @Injectable()
 export class BillingService {
@@ -55,8 +56,19 @@ export class BillingService {
     return await this.billingRepository.save(billingRecord);
   }
 
-  async findAll() {
-    const billingRecords = await this.billingRepository.find();
+  async findAll(filterDto: FilterBillingRecordDto) {
+    const where = {};
+    if (filterDto.id) {
+      where['id'] = filterDto.id;
+    }
+    if (filterDto.subscription_id) {
+      where['subscription'] = {
+        id: filterDto.subscription_id,
+      };
+    }
+    const billingRecords = await this.billingRepository.find({
+      where,
+    });
     return billingRecords.map((billingRecord) =>
       this.entityToDto(billingRecord),
     );
@@ -89,39 +101,43 @@ export class BillingService {
     }
   }
 
+  // For cluster another solution needed
+  private processBillingCycle: boolean;
+
   // Run the check every 1 second (For quick tests. For production need to change, for example to 3 times per day)
   @Cron(CronExpression.EVERY_SECOND)
   async handleBillingCycle() {
-    const subscriptions =
-      await this.subscriptionsService.findDueSubscriptions();
-    console.log(`Billing: found ${subscriptions.length} due subscriptions...`);
+    if (this.processBillingCycle) {
+      return;
+    }
+    this.processBillingCycle = true;
+    try {
+      const subscriptions =
+        await this.subscriptionsService.findDueSubscriptions();
+      console.log(
+        `Billing: found ${subscriptions.length} due subscriptions...`,
+      );
 
-    for (const subscription of subscriptions) {
-      if (!subscription.plan) {
-        console.error(
-          `Plan not found for subscription ${subscription.id}. Skipping billing.`,
-        );
-        continue;
+      for (const subscription of subscriptions) {
+        if (!subscription.plan) {
+          console.error(
+            `Plan not found for subscription ${subscription.id}. Skipping billing.`,
+          );
+          continue;
+        }
+
+        const billingRecordDto: CreateBillingRecordDto = {
+          subscription_id: subscription.id,
+          createdAt: new Date(),
+          amount: subscription.plan.price_per_month,
+          description: `Monthly charge for subscription ID ${subscription.id}`,
+        };
+
+        await this.create(billingRecordDto);
+        await this.subscriptionsService.updateToNextBillingCycle(subscription);
       }
-
-      const billingRecordDto: CreateBillingRecordDto = {
-        subscription_id: subscription.id,
-        createdAt: new Date(),
-        amount: subscription.plan.price_per_month,
-        description: `Monthly charge for subscription ID ${subscription.id}`,
-      };
-
-      await this.create(billingRecordDto);
-
-      const nextCycleStartDate = moment(subscription.billing_cycle_start_date)
-        .add(1, 'months')
-        .toDate();
-
-      const updateDto: Partial<Subscription> = {
-        billing_cycle_start_date: nextCycleStartDate,
-      };
-
-      await this.subscriptionsService.update(subscription.id, updateDto);
+    } finally {
+      this.processBillingCycle = false;
     }
   }
 }

@@ -6,14 +6,16 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
+import { FilterSubscriptionDto } from './dto/filter-subscription.dto';
 
 @Controller('api/v1/subscriptions')
 export class SubscriptionsController {
-  constructor(private readonly subscriptionsService: SubscriptionsService) {}
+  constructor(private readonly subscriptionsService: SubscriptionsService) { }
 
   @Post()
   create(@Body() createSubscriptionDto: CreateSubscriptionDto) {
@@ -21,8 +23,8 @@ export class SubscriptionsController {
   }
 
   @Get()
-  findAll() {
-    return this.subscriptionsService.findAll();
+  findAll(@Query() filter: FilterSubscriptionDto) {
+    return this.subscriptionsService.findAll(filter);
   }
 
   @Get(':id')
