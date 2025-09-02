@@ -4,11 +4,11 @@ A subscription plan management system that handles downgrades, proration, billin
 
 ## Features
 
-Subscription plan management (Basic & Pro)
-Mid-cycle downgrade handling with proration
-Usage validation against plan limits
-Accurate billing adjustments and credits
-Edge case handling (same-day downgrade, end-of-cycle, month length differences)
+- Subscription plan management (Basic & Pro)
+- Mid-cycle downgrade handling with proration
+- Usage validation against plan limits
+- Accurate billing adjustments and credits
+- Edge case handling (same-day downgrade, end-of-cycle, month length differences)
 
 ## Technical Stack
 Runtime: (Dockerized) Node.js + NestJS
@@ -16,7 +16,8 @@ Database: (Dockerized) PostgreSQL (via TypeORM)
 Validation: Custom business rules
 Date handling: Native JS Date + moment.js
 
-## Project Structure
+## Project
+```
 src/
   ├── common/        # Shared utilities
   ├── database/      # Database setup
@@ -35,39 +36,46 @@ test/                           # e2e tests
   ├── subscription.e2e-spec.ts  # Subscriptions tests
   ├── time.e2e-spec.ts          # Datetime mocking tests
   ├── user.e2e-spec.ts          # Users tests
+```
 
 ## API Endpoints
 
+API available at: http://localhost:3000
+
 ### CRUD Users
 
-get users
+#### Get users
 GET http://localhost:3000/api/v1/users
 
-get user
+#### Get user
 GET http://localhost:3000/api/v1/users/1
 
-create user
+#### Create user
 POST http://localhost:3000/api/v1/users/
 
-Body json
+Body
+```json
 {
     "name": "John",
     "email": "john.smith@mail.com"
 }
+```
 
-edit user
+#### Edit user
 PATCH http://localhost:3000/api/v1/users/:id
 
 Path Variables
 id: 1
 
 Body
+```json
 {
     "name": "John",
     "email": "john.simonenko@mail.com"
 }
+```
 
-delete user
+#### Delete user
 DELETE http://localhost:3000/api/v1/users/:id
 
 Path Variables
@@ -75,56 +83,58 @@ id: 1
 
 ### Time mocking (for e2e tests)
 
-mock time
+#### Mock time
 POST http://localhost:3000/api/v1/time/
 
 Body
+```json
 {
   "time": "2025-07-01 11:35Z"
 }
+```
 
-get mocked time
+#### Get mocked time
 GET http://localhost:3000/api/v1/time/
 
 ### CRUD Plans
 
-GET
-get plans
-http://localhost:3000/api/v1/plans
+#### Get plans
+GET http://localhost:3000/api/v1/plans
 
-
-GET
-get plan
-http://localhost:3000/api/v1/plans/:id
-
+#### Get plan
+GET http://localhost:3000/api/v1/plans/:id
 
 Path Variables
 id: 1
 
-create plan
+#### Create plan
 POST http://localhost:3000/api/v1/plans/
 
 Body
+```json
 {
   "name": "test plan 1",
   "price_per_month": 30,
   "qr_code_limit": 12
 }
+```
 
-edit plan
+#### Edit plan
 PATCH http://localhost:3000/api/v1/plans/:id
 
 Path Variables
 id: 1
 
 Body
+```json
 {
   "name": "test plan 1",
   "price_per_month": 35,
   "qr_code_limit": 14
 }
+```
 
-delete plan
+#### Delete plan
 DELETE http://localhost:3000/api/v1/plans/:id
 
 Path Variables
@@ -132,18 +142,19 @@ id: 1
 
 ### CRUD subscriptions
 
-get subscriptions
+#### Get subscriptions
 GET http://localhost:3000/api/v1/subscriptions
 
-get subscription
+#### Get subscription
 GET http://localhost:3000/api/v1/subscriptions/:id
 
 Path Variables
 id: 1
 
-create subscription
+#### Create subscription
 POST http://localhost:3000/api/v1/subscriptions/
 
+```json
   Required body fields:
   "user_id" - user id
   "plan_id" - plad id
@@ -153,9 +164,10 @@ POST http://localhost:3000/api/v1/subscriptions/
   "billing_cycle_end_date" - End date time for billing cycle. Example: "2025-10-01T20:24:05.988Z",
   "outstanding_credit" - Credit due
   "current_qrcode_usage" - Current QR Code usage
-
+```
 
 Body
+```json
 {
     "user_id": 11,
     "plan_id": 16,
@@ -165,10 +177,12 @@ Body
     "outstanding_credit": 0,
     "current_qrcode_usage": 0
 }
+```
 
-edit subscription (downgrade/upgrade)
+#### Edit subscription (downgrade/upgrade)
 PATCH http://localhost:3000/api/v1/subscriptions/:id
 
+```json
   Optional body fields:
   "user_id" - user id
   "plan_id" - plad id
@@ -176,40 +190,34 @@ PATCH http://localhost:3000/api/v1/subscriptions/:id
   "billing_cycle_end_date" - End date time for billing cycle. Example: "2025-10-01T20:24:05.988Z",
   "outstanding_credit" - Credit due
   "current_qrcode_usage
-
+```
 
 Path Variables
 id: 10
 
 Body
+```json
 {
     "plan_id": 17
 }
+```
 
-delete subscription
+#### Delete subscription
 DELETE http://localhost:3000/api/v1/subscriptions/:id
 
 Path Variables
 id: 10
 
-Get Billing
+### Get Billing
 
-get billing records
+#### Get billing records
 GET http://localhost:3000/api/v1/billing/
 
-get billing record
+#### Get billing record
 GET http://localhost:3000/api/v1/billing/:id
 
 Path Variables
 id: 3
-
-Tests
-
-e2e API tests for API, subsciptions, billing, proration, downgrade validation
-Edge case scenarios included
-
-Run tests:
-npm run test:e2e
 
 ## Setup
 Clone repository
@@ -219,13 +227,39 @@ cd subscriptions
 To run project you need to setup Docker.
 
 ## Build and start project
-```
+```bash
 docker compose up --build
 ```
+
 # Shutdown the project
-```
+```bash
 docker compose down
 ```
 
-API available at: http://localhost:3000
+
+
+## Tests
+
+e2e API tests for API, subsciptions, billing, proration, downgrade validation
+Edge case scenarios included
+
+Run tests:
+```bash
+❯ npm run test:e2e
+
+> subscriptions@0.0.1 test:e2e
+> jest --config ./test/jest-e2e.json
+
+ PASS  test/app.e2e-spec.ts
+ PASS  test/user.e2e-spec.ts
+ PASS  test/plan.e2e-spec.ts
+ PASS  test/billing.e2e-spec.ts
+ PASS  test/subscription.e2e-spec.ts
+
+Test Suites: 1 skipped, 5 passed, 5 of 6 total
+Tests:       10 skipped, 10 passed, 20 total
+Snapshots:   0 total
+Time:        3.646 s
+Ran all test suites.
+```
 
