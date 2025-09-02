@@ -89,8 +89,8 @@ export class BillingService {
     }
   }
 
-  // Run the check every 1 second (for quick tests)
-  @Cron(CronExpression.EVERY_SECOND)
+  // Run the check every 1 second (For quick tests. For production need to change, for example to 3 times per day)
+  //@Cron(CronExpression.EVERY_SECOND)
   async handleBillingCycle() {
     const subscriptions =
       await this.subscriptionsService.findDueSubscriptions();

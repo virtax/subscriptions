@@ -9,20 +9,12 @@ import {
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { Subscription } from './entities/subscription.entity';
-import { Between, QueryFailedError, Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Plan } from './entities/plan.entity';
 import { plainToClass } from 'class-transformer';
 import moment from 'moment';
 import { TimeService } from 'src/time/time.service';
-
-interface PostgresError extends Error {
-  code: string;
-  detail?: string;
-}
-
-function isPostgresError(error: any): error is PostgresError {
-  return error && typeof error.code === 'string';
-}
+import { isPostgresConflictError } from 'src/common/errors';
 
 @Injectable()
 export class SubscriptionsService {
@@ -112,15 +104,8 @@ export class SubscriptionsService {
         await this.subscriptionsRepository.save(subscription);
       return this.entityToDto(savedSubscription);
     } catch (error) {
-      if (error instanceof QueryFailedError) {
-        if (
-          isPostgresError(error.driverError) &&
-          error.driverError.code === '23505'
-        ) {
-          throw new ConflictException(
-            'User already has an active subscription.',
-          );
-        }
+      if (isPostgresConflictError(error)) {
+        throw new ConflictException('User already has an active subscription.');
       }
       throw error;
     }
