@@ -192,7 +192,7 @@ describe('BillingController (e2e)', () => {
   // - Basic plan daily rate: $10/28 ~ $0.3571
   // - Credit due: ($0.8929 - $0.3571) x 14 ~ $7.50
 
-  it.only('Downgrade the plan on day 15 of a 31-day period, check the outstanding credit', async () => {
+  it('Downgrade the plan on day 15 of a 31-day period, check the outstanding credit', async () => {
     expect(user?.id).toBeDefined();
     expect(proPlan?.id).toBeDefined();
     expect(basicPlan?.id).toBeDefined();
