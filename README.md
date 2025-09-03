@@ -16,6 +16,55 @@ Database: (Dockerized) PostgreSQL (via TypeORM)
 Validation: Custom business rules
 Date handling: Native JS Date + moment.js
 
+
+## Setup
+Clone repository
+```bash
+git clone https://github.com/virtax/subscriptions.git
+cd subscriptions
+```
+
+Copy .env.example to .env
+```bash
+cp .env.example .env
+```
+
+## Build and start project
+To run project you need to setup Docker.
+```bash
+docker compose up --build
+```
+
+## Shutdown the project
+```bash
+docker compose down
+```
+
+## Tests
+
+e2e API tests for API, subsciptions, billing, proration, downgrade validation.
+Edge case scenarios included.
+
+Run tests:
+```bash
+❯ npm run test:e2e
+
+> subscriptions@0.0.1 test:e2e
+> jest --config ./test/jest-e2e.json
+
+ PASS  test/app.e2e-spec.ts
+ PASS  test/user.e2e-spec.ts
+ PASS  test/plan.e2e-spec.ts
+ PASS  test/billing.e2e-spec.ts
+ PASS  test/subscription.e2e-spec.ts
+
+Test Suites: 1 skipped, 5 passed, 5 of 6 total
+Tests:       10 skipped, 10 passed, 20 total
+Snapshots:   0 total
+Time:        3.646 s
+Ran all test suites.
+```
+
 ## Project
 ```
 src/
@@ -218,48 +267,3 @@ GET http://localhost:3000/api/v1/billing/:id
 
 Path Variables
 id: 3
-
-## Setup
-Clone repository
-git clone https://github.com/virtax/subscriptions.git
-cd subscriptions
-
-To run project you need to setup Docker.
-
-## Build and start project
-```bash
-docker compose up --build
-```
-
-# Shutdown the project
-```bash
-docker compose down
-```
-
-
-
-## Tests
-
-e2e API tests for API, subsciptions, billing, proration, downgrade validation
-Edge case scenarios included
-
-Run tests:
-```bash
-❯ npm run test:e2e
-
-> subscriptions@0.0.1 test:e2e
-> jest --config ./test/jest-e2e.json
-
- PASS  test/app.e2e-spec.ts
- PASS  test/user.e2e-spec.ts
- PASS  test/plan.e2e-spec.ts
- PASS  test/billing.e2e-spec.ts
- PASS  test/subscription.e2e-spec.ts
-
-Test Suites: 1 skipped, 5 passed, 5 of 6 total
-Tests:       10 skipped, 10 passed, 20 total
-Snapshots:   0 total
-Time:        3.646 s
-Ran all test suites.
-```
-
