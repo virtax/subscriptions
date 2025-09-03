@@ -13,7 +13,7 @@ export class Plan {
   id: number;
 
   @Index()
-  @Column('text')
+  @Column('text', { unique: true })
   name: string;
 
   @Column('numeric', {
