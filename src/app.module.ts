@@ -6,11 +6,9 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BillingModule } from './billing/billing.module';
 import { TimeModule } from './time/time.module';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
-    EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     TimeModule,
     UsersModule,

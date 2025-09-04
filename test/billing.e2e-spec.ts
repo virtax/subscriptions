@@ -62,8 +62,6 @@ describe('BillingController (e2e)', () => {
 
     subscription = await subscribe(user, proPlan);
     try {
-      await sleep(1000); // sleep 1000 ms to process subscription.created event and issue a new billing record
-
       const subscriptionBillingRecords = await getBillingRecords(
         subscription.id,
       );
@@ -83,8 +81,6 @@ describe('BillingController (e2e)', () => {
 
     subscription = await subscribe(user, proPlan, 0, outstandingСredit);
     try {
-      await sleep(1000); // sleep 1000 ms to process subscription.created event and issue a new billing record
-
       const subscriptionBillingRecords = await getBillingRecords(
         subscription.id,
       );
@@ -112,8 +108,6 @@ describe('BillingController (e2e)', () => {
 
     subscription = await subscribe(user, proPlan, 0, outstandingСredit);
     try {
-      await sleep(1000); // sleep 1000 ms to process subscription.created event and issue a new billing record
-
       const subscriptionBillingRecords = await getBillingRecords(
         subscription.id,
       );

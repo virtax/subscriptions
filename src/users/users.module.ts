@@ -7,6 +7,7 @@ import { User } from './entities/user.entity';
 
 @Module({
   imports: [DatabaseModule],
+  exports: [UsersService],
   controllers: [UsersController],
   providers: [
     UsersService,
@@ -16,6 +17,5 @@ import { User } from './entities/user.entity';
       inject: ['DATA_SOURCE'],
     },
   ],
-  exports: [UsersService],
 })
 export class UsersModule {}

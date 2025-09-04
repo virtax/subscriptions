@@ -5,8 +5,8 @@ import { DatabaseModule } from '../database/database.module';
 
 @Module({
   imports: [DatabaseModule],
+  exports: [TimeService],
   controllers: [TimeController],
   providers: [TimeService],
-  exports: [TimeService],
 })
 export class TimeModule {}

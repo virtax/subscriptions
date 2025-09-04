@@ -1,15 +1,18 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateBillingRecordDto } from './dto/create-billing-record.dto';
 import { UpdateBillingRecordDto } from './dto/update-billing-record.dto';
 import { BillingRecord } from './entities/billing-record.entity';
 import { Repository } from 'typeorm';
 import { SubscriptionsService } from 'src/subscriptions/subscriptions.service';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { plainToClass } from 'class-transformer';
 import { FilterBillingRecordDto } from './dto/filter-billing-record.dto';
 import { UpdateSubscriptionDto } from 'src/subscriptions/dto/update-subscription.dto';
 import { Subscription } from 'src/subscriptions/entities/subscription.entity';
-import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class BillingService {
@@ -17,7 +20,7 @@ export class BillingService {
     @Inject('BILLING_REPOSITORY')
     private readonly billingRepository: Repository<BillingRecord>,
 
-    @Inject(SubscriptionsService)
+    @Inject(forwardRef(() => SubscriptionsService))
     private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
@@ -104,43 +107,6 @@ export class BillingService {
     }
   }
 
-  // For cluster another solution needed
-  private processBillingCycle: boolean;
-
-  // Run the check every 1 second (For quick tests. For production need to change, for example to 3 times per day)
-  @Cron(CronExpression.EVERY_SECOND)
-  async handleBillingCycle() {
-    if (this.processBillingCycle) {
-      return;
-    }
-    this.processBillingCycle = true;
-    try {
-      const subscriptions =
-        await this.subscriptionsService.findDueSubscriptions();
-      console.log(
-        `Billing: found ${subscriptions.length} due subscriptions...`,
-      );
-
-      for (const subscription of subscriptions) {
-        if (!subscription.plan) {
-          console.error(
-            `Plan not found for subscription ${subscription.id}. Skipping billing.`,
-          );
-          continue;
-        }
-        console.log(`Billing: process subscription ${subscription.id}`);
-        await this.subscriptionsService.updateToNextBillingCycle(
-          subscription.id,
-          subscription.billing_cycle_start_date,
-        );
-
-        await this.charge(subscription);
-      }
-    } finally {
-      this.processBillingCycle = false;
-    }
-  }
-
   async charge(subscription: Subscription) {
     // Todo: use transaction here
     let chargeAmount: number;
@@ -181,10 +147,5 @@ Total Amount Due          $${chargeAmount}`,
       outstanding_credit: newCredit,
     };
     await this.subscriptionsService.update(subscription.id, updateDto);
-  }
-
-  @OnEvent('subscription.created')
-  async handleSubscriptionCreatedEvent(subscription: Subscription) {
-    await this.charge(subscription);
   }
 }

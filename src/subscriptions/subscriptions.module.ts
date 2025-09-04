@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionsController } from './subscriptions.controller';
 import { DatabaseModule } from '../database/database.module';
@@ -9,9 +9,16 @@ import { Plan } from './entities/plan.entity';
 import { Subscription } from './entities/subscription.entity';
 import { UsersModule } from 'src/users/users.module';
 import { TimeModule } from 'src/time/time.module';
+import { BillingModule } from 'src/billing/billing.module';
 
 @Module({
-  imports: [DatabaseModule, UsersModule, TimeModule],
+  imports: [
+    DatabaseModule,
+    UsersModule,
+    TimeModule,
+    forwardRef(() => BillingModule),
+  ],
+  exports: [SubscriptionsService],
 
   controllers: [SubscriptionsController, PlansController],
   providers: [
@@ -29,6 +36,5 @@ import { TimeModule } from 'src/time/time.module';
       inject: ['DATA_SOURCE'],
     },
   ],
-  exports: [SubscriptionsService],
 })
 export class SubscriptionsModule {}

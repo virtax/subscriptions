@@ -2,6 +2,7 @@ import { UsersService } from './../users/users.service';
 import {
   BadRequestException,
   ConflictException,
+  forwardRef,
   Inject,
   Injectable,
   NotFoundException,
@@ -17,7 +18,8 @@ import { TimeService } from 'src/time/time.service';
 import { isPostgresConflictError } from 'src/common/errors';
 import { FilterSubscriptionDto } from './dto/filter-subscription.dto';
 import { User } from 'src/users/entities/user.entity';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { BillingService } from 'src/billing/billing.service';
 
 @Injectable()
 export class SubscriptionsService {
@@ -30,7 +32,8 @@ export class SubscriptionsService {
     private usersService: UsersService,
     @Inject(TimeService)
     private timeService: TimeService,
-    private eventEmitter: EventEmitter2,
+    @Inject(forwardRef(() => BillingService))
+    private billingService: BillingService,
   ) {}
 
   entityToDto(subscription: Subscription): UpdateSubscriptionDto {
@@ -124,7 +127,7 @@ export class SubscriptionsService {
     try {
       const savedSubscription =
         await this.subscriptionsRepository.save(subscription);
-      this.eventEmitter.emit('subscription.created', savedSubscription);
+      await this.billingService.charge(savedSubscription);
 
       return this.entityToDto(savedSubscription);
     } catch (error) {
@@ -246,9 +249,6 @@ New plan limit: ${subscription.plan.qr_code_limit}.`,
     const startOfToday = moment(this.timeService.getCurrentTime())
       .startOf('day')
       .toDate();
-    // const endOfToday = moment(this.timeService.getCurrentTime())
-    //   .endOf('day')
-    //   .toDate();
 
     // Filter subscriptions where the billing cycle already ends.
     return this.subscriptionsRepository.find({
@@ -257,5 +257,41 @@ New plan limit: ${subscription.plan.qr_code_limit}.`,
       },
       relations: ['plan'],
     });
+  }
+
+  // For cluster another solution needed
+  private processBillingCycle: boolean;
+
+  // Run the check every 1 second (For quick tests. For production need to change, for example to 3 times per day)
+  @Cron(CronExpression.EVERY_SECOND)
+  async handleBillingCycle() {
+    if (this.processBillingCycle) {
+      return;
+    }
+    this.processBillingCycle = true;
+    try {
+      const subscriptions = await this.findDueSubscriptions();
+      console.log(
+        `Billing: found ${subscriptions.length} due subscriptions...`,
+      );
+
+      for (const subscription of subscriptions) {
+        if (!subscription.plan) {
+          console.error(
+            `Plan not found for subscription ${subscription.id}. Skipping billing.`,
+          );
+          continue;
+        }
+        console.log(`Billing: process subscription ${subscription.id}`);
+        await this.updateToNextBillingCycle(
+          subscription.id,
+          subscription.billing_cycle_start_date,
+        );
+
+        await this.billingService.charge(subscription);
+      }
+    } finally {
+      this.processBillingCycle = false;
+    }
   }
 }
