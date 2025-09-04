@@ -59,6 +59,7 @@ describe('SubscriptionsController (e2e)', () => {
       expect(subscription.billing_cycle_start_date).toBeDefined();
       expect(subscription.billing_cycle_end_date).toBeDefined();
       expect(subscription.outstanding_credit).toBe(0);
+      expect(subscription.current_qrcode_usage).toBe(0);
     } finally {
       await unSubscribe(subscription);
     }

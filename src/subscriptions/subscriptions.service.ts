@@ -9,7 +9,7 @@ import {
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { Subscription } from './entities/subscription.entity';
-import { Between, Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { Plan } from './entities/plan.entity';
 import { plainToClass } from 'class-transformer';
 import moment from 'moment';
@@ -17,6 +17,7 @@ import { TimeService } from 'src/time/time.service';
 import { isPostgresConflictError } from 'src/common/errors';
 import { FilterSubscriptionDto } from './dto/filter-subscription.dto';
 import { User } from 'src/users/entities/user.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class SubscriptionsService {
@@ -29,7 +30,8 @@ export class SubscriptionsService {
     private usersService: UsersService,
     @Inject(TimeService)
     private timeService: TimeService,
-  ) {}
+    private eventEmitter: EventEmitter2,
+  ) { }
 
   entityToDto(subscription: Subscription): UpdateSubscriptionDto {
     const subscriptionDto = plainToClass(UpdateSubscriptionDto, subscription);
@@ -122,6 +124,8 @@ export class SubscriptionsService {
     try {
       const savedSubscription =
         await this.subscriptionsRepository.save(subscription);
+      this.eventEmitter.emit('subscription.created', savedSubscription);
+
       return this.entityToDto(savedSubscription);
     } catch (error) {
       if (isPostgresConflictError(error)) {
@@ -167,7 +171,7 @@ export class SubscriptionsService {
   async updateToNextBillingCycle(
     id: number,
     billingCycleStartDate: Date,
-    outstandingCredit: number,
+    //outstandingCredit: number,
   ) {
     const nextCycleStartDate = moment(billingCycleStartDate)
       .add(1, 'months')
@@ -181,7 +185,7 @@ export class SubscriptionsService {
     const updateDto: Partial<Subscription> = {
       billing_cycle_start_date: nextCycleStartDate,
       billing_cycle_end_date: nextCycleEndDate,
-      outstanding_credit: outstandingCredit,
+      // outstanding_credit: outstandingCredit,
     };
     return await this.update(id, updateDto);
   }
@@ -242,14 +246,14 @@ New plan limit: ${subscription.plan.qr_code_limit}.`,
     const startOfToday = moment(this.timeService.getCurrentTime())
       .startOf('day')
       .toDate();
-    const endOfToday = moment(this.timeService.getCurrentTime())
-      .endOf('day')
-      .toDate();
+    // const endOfToday = moment(this.timeService.getCurrentTime())
+    //   .endOf('day')
+    //   .toDate();
 
-    // Filter subscriptions where the billing cycle starts today, ignoring time.
+    // Filter subscriptions where the billing cycle already ends.
     return this.subscriptionsRepository.find({
       where: {
-        billing_cycle_start_date: Between(startOfToday, endOfToday),
+        billing_cycle_end_date: LessThan(startOfToday),
       },
       relations: ['plan'],
     });

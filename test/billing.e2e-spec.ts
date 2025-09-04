@@ -19,13 +19,13 @@ let subscription: CreateSubscriptionDto;
 let basicPlan: CreatePlanDto, proPlan: CreatePlanDto;
 
 const basicPlanDto: CreatePlanDto = {
-  name: 'Billing test Basic plan',
+  name: `Billing test Basic plan #${Date.now()}`, //unique name
   price_per_month: 10,
   qr_code_limit: 5,
 };
 
 const proPlanDto: CreatePlanDto = {
-  name: 'Billing test Pro plan',
+  name: `Billing test Pro plan #${Date.now()}`, //unique name
   price_per_month: 25,
   qr_code_limit: 20,
 };
@@ -61,7 +61,7 @@ describe('BillingController (e2e)', () => {
 
     subscription = await subscribe(user, proPlan);
     try {
-      await sleep(1200); // sleep 1.2 sec, wait for cron job to issue a billing record
+      await sleep(1000); // sleep 1000 ms to process subscription.created event and issue a new billing record
 
       const subscriptionBillingRecords = await getBillingRecords(
         subscription.id,
@@ -82,7 +82,7 @@ describe('BillingController (e2e)', () => {
 
     subscription = await subscribe(user, proPlan, 0, outstandingСredit);
     try {
-      await sleep(1200); // sleep 1.2 sec, wait for cron job to issue a billing record
+      await sleep(1000); // sleep 1000 ms to process subscription.created event and issue a new billing record
 
       const subscriptionBillingRecords = await getBillingRecords(
         subscription.id,
@@ -111,7 +111,7 @@ describe('BillingController (e2e)', () => {
 
     subscription = await subscribe(user, proPlan, 0, outstandingСredit);
     try {
-      await sleep(1500); // sleep 1.5 sec, wait for cron job to issue a billing record
+      await sleep(1000); // sleep 1000 ms to process subscription.created event and issue a new billing record
 
       const subscriptionBillingRecords = await getBillingRecords(
         subscription.id,

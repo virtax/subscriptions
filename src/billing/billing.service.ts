@@ -7,12 +7,17 @@ import { SubscriptionsService } from 'src/subscriptions/subscriptions.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { plainToClass } from 'class-transformer';
 import { FilterBillingRecordDto } from './dto/filter-billing-record.dto';
+import { UpdateSubscriptionDto } from 'src/subscriptions/dto/update-subscription.dto';
+import { Subscription } from 'src/subscriptions/entities/subscription.entity';
+import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class BillingService {
   constructor(
     @Inject('BILLING_REPOSITORY')
     private readonly billingRepository: Repository<BillingRecord>,
+
+    @Inject(SubscriptionsService)
     private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
@@ -123,52 +128,63 @@ export class BillingService {
           );
           continue;
         }
-
-        // Todo: use transaction here
-        let chargeAmount: number;
-        let newCredit: number;
-
-        if (subscription.outstanding_credit > 0) {
-          if (
-            subscription.outstanding_credit >= subscription.plan.price_per_month
-          ) {
-            newCredit =
-              subscription.outstanding_credit -
-              subscription.plan.price_per_month;
-            chargeAmount = 0;
-          } else {
-            newCredit = 0;
-            chargeAmount =
-              subscription.plan.price_per_month -
-              subscription.outstanding_credit;
-          }
-        } else {
-          newCredit = 0;
-          chargeAmount = subscription.plan.price_per_month;
-        }
-
-        const billingRecordDto: CreateBillingRecordDto = {
-          subscription_id: subscription.id,
-          createdAt: new Date(),
-          amount: chargeAmount,
-          // Todo: Move to the detail sub items/lines?
-          description: `Monthly charge for subscription ID ${subscription.id}:
-Description               Price
-${subscription.plan.name} Subscription   $${subscription.plan.price_per_month}
-Credit                    ($${subscription.outstanding_credit})
-Total Amount Due          $${chargeAmount}`,
-        };
-
-        await this.create(billingRecordDto);
-
+        console.log(`Billing: process subscription ${subscription.id}`);
         await this.subscriptionsService.updateToNextBillingCycle(
           subscription.id,
           subscription.billing_cycle_start_date,
-          newCredit,
         );
+
+        await this.charge(subscription);
       }
     } finally {
       this.processBillingCycle = false;
     }
+  }
+
+  async charge(subscription: Subscription) {
+    // Todo: use transaction here
+    let chargeAmount: number;
+    let newCredit: number;
+
+    if (subscription.outstanding_credit > 0) {
+      if (
+        subscription.outstanding_credit >= subscription.plan.price_per_month
+      ) {
+        newCredit =
+          subscription.outstanding_credit - subscription.plan.price_per_month;
+        chargeAmount = 0;
+      } else {
+        newCredit = 0;
+        chargeAmount =
+          subscription.plan.price_per_month - subscription.outstanding_credit;
+      }
+    } else {
+      newCredit = 0;
+      chargeAmount = subscription.plan.price_per_month;
+    }
+
+    const billingRecordDto: CreateBillingRecordDto = {
+      subscription_id: subscription.id,
+      createdAt: new Date(),
+      amount: chargeAmount,
+      // Todo: Move to the detail sub items/lines?
+      description: `Monthly charge for subscription ID ${subscription.id}:
+Description               Price
+${subscription.plan.name} Subscription   $${subscription.plan.price_per_month}
+Credit                    ($${subscription.outstanding_credit})
+Total Amount Due          $${chargeAmount}`,
+    };
+
+    await this.create(billingRecordDto);
+
+    const updateDto: UpdateSubscriptionDto = {
+      outstanding_credit: newCredit,
+    };
+    await this.subscriptionsService.update(subscription.id, updateDto);
+  }
+
+  @OnEvent('subscription.created')
+  async handleSubscriptionCreatedEvent(subscription: Subscription) {
+    await this.charge(subscription);
   }
 }
