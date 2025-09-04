@@ -206,7 +206,7 @@ POST http://localhost:3000/api/v1/subscriptions/
 ```
   Required body fields:
   "user_id" - user id
-  "plan_id" - plad id
+  "plan_id" - plan id
 
   Optional fields:
   "billing_cycle_start_date" - Start date time for billing cycle. Example: "2025-09-02T20:24:05.988Z",

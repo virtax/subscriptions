@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
@@ -15,7 +16,7 @@ import { FilterSubscriptionDto } from './dto/filter-subscription.dto';
 
 @Controller('api/v1/subscriptions')
 export class SubscriptionsController {
-  constructor(private readonly subscriptionsService: SubscriptionsService) { }
+  constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
   @Post()
   create(@Body() createSubscriptionDto: CreateSubscriptionDto) {
@@ -37,6 +38,22 @@ export class SubscriptionsController {
     @Param('id') id: string,
     @Body() updateSubscriptionDto: UpdateSubscriptionDto,
   ) {
+    if (updateSubscriptionDto.user_id) {
+      throw new BadRequestException(["You can't change user_id"]);
+    }
+    if (updateSubscriptionDto.plan_start_date) {
+      throw new BadRequestException(["You can't change plan_start_date"]);
+    }
+    if (updateSubscriptionDto.billing_cycle_start_date) {
+      throw new BadRequestException([
+        "You can't change billing_cycle_start_date",
+      ]);
+    }
+    if (updateSubscriptionDto.billing_cycle_end_date) {
+      throw new BadRequestException([
+        "You can't change billing_cycle_end_date",
+      ]);
+    }
     return this.subscriptionsService.update(+id, updateSubscriptionDto);
   }
 

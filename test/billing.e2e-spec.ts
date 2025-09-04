@@ -137,9 +137,13 @@ describe('BillingController (e2e)', () => {
       expect(subscription.plan_id).toBe(proPlan.id);
 
       await mockTime('2025-04-15T09:00:00.000Z');
-      subscription.plan_id = basicPlan.id!;
+      const subscriptionToUpdate = {
+        id: subscription.id,
+        plan_id: basicPlan.id,
+      };
 
-      const updatedSubscription = await updateSubscription(subscription);
+      const updatedSubscription =
+        await updateSubscription(subscriptionToUpdate);
       expect(updatedSubscription.plan_id).toBe(basicPlan.id);
       expect(updatedSubscription.outstanding_credit).toBe(7.5);
     } finally {
@@ -166,9 +170,14 @@ describe('BillingController (e2e)', () => {
       expect(subscription.plan_id).toBe(proPlan.id);
 
       await mockTime('2025-01-15T09:00:00.000Z');
-      subscription.plan_id = basicPlan.id!;
 
-      const updatedSubscription = await updateSubscription(subscription);
+      const subscriptionToUpdate = {
+        id: subscription.id,
+        plan_id: basicPlan.id,
+      };
+      const updatedSubscription =
+        await updateSubscription(subscriptionToUpdate);
+
       expect(updatedSubscription.plan_id).toBe(basicPlan.id);
       expect(updatedSubscription.outstanding_credit).toBe(7.74);
     } finally {
@@ -195,9 +204,14 @@ describe('BillingController (e2e)', () => {
       expect(subscription.plan_id).toBe(proPlan.id);
 
       await mockTime('2025-02-14T09:00:00.000Z');
-      subscription.plan_id = basicPlan.id!;
 
-      const updatedSubscription = await updateSubscription(subscription);
+      const subscriptionToUpdate = {
+        id: subscription.id,
+        plan_id: basicPlan.id,
+      };
+      const updatedSubscription =
+        await updateSubscription(subscriptionToUpdate);
+
       expect(updatedSubscription.plan_id).toBe(basicPlan.id);
       expect(updatedSubscription.outstanding_credit).toBe(7.5);
     } finally {
@@ -223,9 +237,13 @@ describe('BillingController (e2e)', () => {
       subscription = await subscribe(user, proPlan);
       expect(subscription.plan_id).toBe(proPlan.id);
 
-      subscription.plan_id = basicPlan.id!;
+      const subscriptionToUpdate = {
+        id: subscription.id,
+        plan_id: basicPlan.id,
+      };
+      const updatedSubscription =
+        await updateSubscription(subscriptionToUpdate);
 
-      const updatedSubscription = await updateSubscription(subscription);
       expect(updatedSubscription.plan_id).toBe(basicPlan.id);
       expect(updatedSubscription.outstanding_credit).toBe(14.5);
     } finally {
@@ -252,9 +270,14 @@ describe('BillingController (e2e)', () => {
       expect(subscription.plan_id).toBe(proPlan.id);
 
       await mockTime('2025-04-30T09:00:00.000Z');
-      subscription.plan_id = basicPlan.id!;
 
-      const updatedSubscription = await updateSubscription(subscription);
+      const subscriptionToUpdate = {
+        id: subscription.id,
+        plan_id: basicPlan.id,
+      };
+      const updatedSubscription =
+        await updateSubscription(subscriptionToUpdate);
+
       expect(updatedSubscription.plan_id).toBe(basicPlan.id);
       expect(updatedSubscription.outstanding_credit).toBe(0);
     } finally {

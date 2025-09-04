@@ -5,12 +5,15 @@ import { CreateUserDto } from '../src/users/dto/create-user.dto';
 import { createPlan, deletePlan } from './common/plan.test.methods';
 import { createUser, deleteUser } from './common/user.test.methods';
 import {
+  findSubscription,
   subscribe,
   unSubscribe,
   updateSubscription,
 } from './common/subscription.test.methods';
+import { BAD_REQUEST_ERROR, NOT_FOUND_ERROR } from './common/test.constants';
 
 let user: CreateUserDto;
+let user2: CreateUserDto;
 let subscription: CreateSubscriptionDto;
 
 let basicPlan: CreatePlanDto, proPlan: CreatePlanDto;
@@ -36,9 +39,15 @@ describe('SubscriptionsController (e2e)', () => {
       name: 'Helen Smith',
       email: 'helen.smith@mail.com',
     });
-
     expect(user.name).toBe('Helen Smith');
     expect(user.email).toBe('helen.smith@mail.com');
+
+    user2 = await createUser({
+      name: 'Robert Smith',
+      email: 'rob.smith@mail.com',
+    });
+    expect(user2.name).toBe('Robert Smith');
+    expect(user2.email).toBe('rob.smith@mail.com');
   });
 
   afterAll(async () => {
@@ -72,16 +81,108 @@ describe('SubscriptionsController (e2e)', () => {
     const current_qrcode_usage = 15;
 
     subscription = await subscribe(user, proPlan, current_qrcode_usage);
-    expect(subscription.plan_id).toBe(proPlan.id);
+    try {
+      expect(subscription.plan_id).toBe(proPlan.id);
 
-    subscription.plan_id = basicPlan.id!;
-    const BAD_REQUEST_ERROR = 400;
-    await updateSubscription(subscription, BAD_REQUEST_ERROR);
-  });
+      const subscriptionToUpdate = {
+        id: subscription.id,
+        plan_id: basicPlan.id,
+      };
 
-  it('unSubscribe', async () => {
-    if (subscription?.id) {
+      await updateSubscription(subscriptionToUpdate, BAD_REQUEST_ERROR);
+    } finally {
       await unSubscribe(subscription);
     }
+  });
+
+  it('does not allow changing the user of a subscription', async () => {
+    expect(user?.id).toBeDefined();
+    expect(proPlan?.id).toBeDefined();
+
+    subscription = await subscribe(user, proPlan);
+    try {
+      expect(subscription.plan_id).toBe(proPlan.id);
+
+      const subscriptionToUpdate = {
+        id: subscription.id,
+        plan_id: proPlan.id,
+        user_id: user2.id,
+      };
+
+      await updateSubscription(subscriptionToUpdate, BAD_REQUEST_ERROR);
+    } finally {
+      await unSubscribe(subscription);
+    }
+  });
+
+
+  it('does not allow changing the plan_start_date of a subscription', async () => {
+    expect(user?.id).toBeDefined();
+    expect(proPlan?.id).toBeDefined();
+
+    subscription = await subscribe(user, proPlan);
+    try {
+      expect(subscription.plan_id).toBe(proPlan.id);
+
+      const subscriptionToUpdate = {
+        id: subscription.id,
+        plan_id: proPlan.id,
+        plan_start_date: new Date(),
+      };
+
+      await updateSubscription(subscriptionToUpdate, BAD_REQUEST_ERROR);
+    } finally {
+      await unSubscribe(subscription);
+    }
+  });
+
+  it('does not allow changing the billing_cycle_start_date of a subscription', async () => {
+    expect(user?.id).toBeDefined();
+    expect(proPlan?.id).toBeDefined();
+
+    subscription = await subscribe(user, proPlan);
+    try {
+      expect(subscription.plan_id).toBe(proPlan.id);
+
+      const subscriptionToUpdate = {
+        id: subscription.id,
+        plan_id: proPlan.id,
+        billing_cycle_start_date: new Date(),
+      };
+
+      await updateSubscription(subscriptionToUpdate, BAD_REQUEST_ERROR);
+    } finally {
+      await unSubscribe(subscription);
+    }
+  });
+
+  it('does not allow changing the billing_cycle_end_date of a subscription', async () => {
+    expect(user?.id).toBeDefined();
+    expect(proPlan?.id).toBeDefined();
+
+    subscription = await subscribe(user, proPlan);
+    try {
+      expect(subscription.plan_id).toBe(proPlan.id);
+
+      const subscriptionToUpdate = {
+        id: subscription.id,
+        plan_id: proPlan.id,
+        billing_cycle_end_date: new Date(),
+      };
+
+      await updateSubscription(subscriptionToUpdate, BAD_REQUEST_ERROR);
+    } finally {
+      await unSubscribe(subscription);
+    }
+  });
+
+
+  it('unSubscribe', async () => {
+    expect(user?.id).toBeDefined();
+    expect(proPlan?.id).toBeDefined();
+
+    subscription = await subscribe(user, proPlan);
+    await unSubscribe(subscription);
+    await findSubscription(subscription.id!, NOT_FOUND_ERROR);
   });
 });

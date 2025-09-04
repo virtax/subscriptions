@@ -7,10 +7,11 @@ import { CreatePlanDto } from '../../src/subscriptions/dto/create-plan.dto';
 
 export async function findSubscription(
   id: number,
+  expectedHTTPCode: number = 200,
 ): Promise<UpdateSubscriptionDto> {
   const res = await request(`${apiUrl}/subscriptions`)
     .get(`/${id}`)
-    .expect(200);
+    .expect(expectedHTTPCode);
   return res.body as UpdateSubscriptionDto;
 }
 
