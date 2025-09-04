@@ -31,7 +31,7 @@ export class SubscriptionsService {
     @Inject(TimeService)
     private timeService: TimeService,
     private eventEmitter: EventEmitter2,
-  ) { }
+  ) {}
 
   entityToDto(subscription: Subscription): UpdateSubscriptionDto {
     const subscriptionDto = plainToClass(UpdateSubscriptionDto, subscription);

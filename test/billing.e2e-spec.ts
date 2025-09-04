@@ -13,6 +13,7 @@ import {
 import { getBillingRecords } from './common/billing.test.methods';
 import { sleep } from './common/test.utils';
 import { mockTime, removeTimeMock } from './common/time.test.methods';
+import moment from 'moment';
 
 let user: CreateUserDto;
 let subscription: CreateSubscriptionDto;
@@ -265,6 +266,35 @@ describe('BillingController (e2e)', () => {
       const updatedSubscription = await updateSubscription(subscription);
       expect(updatedSubscription.plan_id).toBe(basicPlan.id);
       expect(updatedSubscription.outstanding_credit).toBe(0);
+    } finally {
+      await removeTimeMock();
+      await unSubscribe(subscription);
+    }
+  });
+
+  it('Update subscription to a new billing period', async () => {
+    expect(user?.id).toBeDefined();
+    expect(proPlan?.id).toBeDefined();
+    expect(basicPlan?.id).toBeDefined();
+
+    await mockTime('2025-04-01T09:00:00.000Z');
+    try {
+      subscription = await subscribe(user, proPlan);
+      expect(subscription.plan_id).toBe(proPlan.id);
+
+      await mockTime('2025-05-01T09:00:00.000Z');
+      await sleep(1200); // sleep 1.2 sec to process cron job for new billing period
+
+      const updatedSubscription = await findSubscription(subscription.id!);
+
+      expect(
+        moment(updatedSubscription.billing_cycle_start_date).format(
+          'YYYY-MM-DD',
+        ),
+      ).toBe('2025-05-01');
+      expect(
+        moment(updatedSubscription.billing_cycle_end_date).format('YYYY-MM-DD'),
+      ).toBe('2025-05-31');
     } finally {
       await removeTimeMock();
       await unSubscribe(subscription);
