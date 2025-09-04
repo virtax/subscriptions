@@ -203,7 +203,7 @@ id: 1
 #### Create subscription
 POST http://localhost:3000/api/v1/subscriptions/
 
-```json
+```
   Required body fields:
   "user_id" - user id
   "plan_id" - plad id
@@ -231,7 +231,7 @@ Body
 #### Edit subscription (downgrade/upgrade)
 PATCH http://localhost:3000/api/v1/subscriptions/:id
 
-```json
+```
   Optional body fields:
   "user_id" - user id
   "plan_id" - plad id
