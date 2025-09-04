@@ -47,9 +47,6 @@ describe('BillingController (e2e)', () => {
   });
 
   afterAll(async () => {
-    // if (subscription?.id) {
-    //   await unSubscribe(subscription);
-    // }
     await deletePlan(basicPlan);
     await deletePlan(proPlan);
     await deleteUser(user);
@@ -275,6 +272,12 @@ describe('BillingController (e2e)', () => {
     try {
       subscription = await subscribe(user, proPlan);
       expect(subscription.plan_id).toBe(proPlan.id);
+      expect(
+        moment(subscription.billing_cycle_start_date).format('YYYY-MM-DD'),
+      ).toBe('2025-04-01');
+      expect(
+        moment(subscription.billing_cycle_end_date).format('YYYY-MM-DD'),
+      ).toBe('2025-04-30');
 
       await mockTime('2025-05-01T09:00:00.000Z');
       await sleep(1200); // sleep 1.2 sec to process cron job for new billing period

@@ -17,9 +17,6 @@
       "sourceMaps": true,
       "smartStep": true,
       "skipFiles": ["<node_internals>/**"],
-      // "sourceMapPathOverrides": {
-      //   "/home/node/app/src/*": "${workspaceFolder}/src/*"
-      // },
     },
     {
       "name": "Debug e2e tests (npm run test:e2e)",
